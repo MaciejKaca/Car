@@ -47,13 +47,13 @@ void SensorHandling::trigger_sensor()
     digitalWrite(triggerPin, LOW);
 }
 
-void SensorHandling::measure(float * const arr_ptr)
+void SensorHandling::measure(float * measurment)
 {
     std::vector<std::thread> sensorReading;
 
     for(int sensorNumber = 0; sensorNumber < 2; ++sensorNumber)
     {
-        sensorReading.push_back(std::thread(getSensorMeasurment, sensorNumber, arr_ptr+sensorNumber ));
+        sensorReading.push_back(std::thread(getSensorMeasurment, sensorNumber, measurment+sensorNumber ));
     }
 
     while(true)
@@ -69,7 +69,7 @@ void SensorHandling::measure(float * const arr_ptr)
     }
 }
 
-void SensorHandling::start_measuring(float * const arr_ptr)
+void SensorHandling::start_measuring(float * measurment)
 {
-    std::async(&measure, arr_ptr);
+    std::async(&measure, measurment);
 }

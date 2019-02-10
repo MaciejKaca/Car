@@ -5,14 +5,12 @@ class SensorHandling
 {
     public:
         SensorHandling();
-        float sensorMeasurments[NUMBER_OF_SENSORS];
-        void start_measuring();
+        static float sensorMeasurments[NUMBER_OF_SENSORS];
+        void start_measuring(float * const arr_ptr);
         
     private:
         static int triggerDelay;
         static int triggerPin;
-        static int firstEchoPin;
-        void read_sensor(int sensorSide);
-        void trigger_sensor();
-        void measure();
-};
+        static void trigger_sensor();
+        static void measure(float * const arr_ptr);
+}; 

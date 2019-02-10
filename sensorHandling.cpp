@@ -37,17 +37,14 @@ void getSensorMeasurment(int sensorNumber, float *measurment)
     
     pulseDuration = pulseStart - pulseEnd;
     distance = roundf((17150 * pulseDuration.count()*100)/100);
-    measurment = &distance;
+    *measurment = distance;
 }
 
 void SensorHandling::trigger_sensor()
 {
-    while(true)
-    {
-        digitalWrite(triggerPin, HIGH);
-        delay(1);
-        digitalWrite(triggerPin, LOW);
-    }
+    digitalWrite(triggerPin, HIGH);
+    delay(1);
+    digitalWrite(triggerPin, LOW);
 }
 
 void SensorHandling::measure(float * const arr_ptr)

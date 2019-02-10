@@ -7,9 +7,10 @@ float SensorHandling::sensorMeasurments[NUMBER_OF_SENSORS];
 
 int main(int argc, char *argv[])
 {
+    wiringPiSetup();
+
     SensorHandling sensors;
 
-    wiringPiSetup();
     sensors.start_measuring(SensorHandling::sensorMeasurments);
 
     while(true)

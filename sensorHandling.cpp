@@ -23,27 +23,29 @@ SensorHandling::SensorHandling()
 
 float get_sensor_measurment(int sensorNumber)
 {
+    int soundSpeed = 340;
     int firstEchoPin = 4;
     int sensorEchoPin = firstEchoPin + sensorNumber;
     auto pulseStart = std::chrono::system_clock::now();
     auto pulseEnd = std::chrono::system_clock::now();
     std::chrono::duration<double> pulseDuration;
-    float distance;
 
     while(digitalRead(sensorEchoPin)==LOW)
-       pulseStart = std::chrono::system_clock::now();
+       pulseStart = std::chrono::high_resolution_clock::now();
     while(digitalRead(sensorEchoPin)==HIGH)
-       pulseStart = std::chrono::system_clock::now();
+       pulseEnd = std::chrono::high_resolution_clock::now();
     
-    pulseDuration = pulseStart - pulseEnd;
-    distance = roundf((17150 * pulseDuration.count()*100)/100);
-    return distance;
+    std::chrono::duration<float, std::micro> elapsedTime = pulseEnd - pulseStart;
+    float toSeconds = (elapsedTime.count()/2)/1000000;
+    float distance = soundSpeed * toSeconds;
+    float distaceToCm = distance * 100;
+    return distaceToCm;
 }
 
 void SensorHandling::trigger_sensor()
 {
     digitalWrite(triggerPin, HIGH);
-    delay(10);
+    delay(1);
     digitalWrite(triggerPin, LOW);
 }
 
@@ -67,8 +69,8 @@ void SensorHandling::measure(float * measurment)
 
         for(auto& results : sensorReading)
         {
-            measurment++;
             *measurment = results.get();
+            measurment++;
         }
 
         sensorReading.clear();

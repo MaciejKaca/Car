@@ -6,7 +6,7 @@
 #include <math.h>
 #include <iostream>
 
-int SensorHandling::triggerDelay = 100;
+int SensorHandling::triggerDelay = 500;
 int SensorHandling::triggerPin = 1;
 
 SensorHandling::SensorHandling()
@@ -51,7 +51,6 @@ void SensorHandling::trigger_sensor()
 
 void SensorHandling::measure(float * measurment)
 {
-    std::vector<std::future<float>> sensorReading;
     float * originalMeasurmentPtr = measurment;
 
     while(true)
@@ -59,20 +58,13 @@ void SensorHandling::measure(float * measurment)
         delay(triggerDelay);
 
         trigger_sensor();
-
+        
+        measurment = originalMeasurmentPtr;
         for(int sensorNumber = 0; sensorNumber < NUMBER_OF_SENSORS; sensorNumber++)
         {
-            sensorReading.push_back(std::async(std::launch::async, get_sensor_measurment, sensorNumber));
-        }
-
-        measurment = originalMeasurmentPtr;
-
-        for(auto& results : sensorReading)
-        {
-            *measurment = results.get();
+            trigger_sensor();
+            *measurment = get_sensor_measurment(sensorNumber);
             measurment++;
         }
-
-        sensorReading.clear();
     }
 }

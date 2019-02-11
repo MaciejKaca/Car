@@ -2,6 +2,7 @@
 #include <wiringPi.h>
 #include "sensorHandling.h"
 #include <stdlib.h>
+#include <future>
 
 float SensorHandling::sensorMeasurments[NUMBER_OF_SENSORS];
 
@@ -9,9 +10,7 @@ int main(int argc, char *argv[])
 {
     wiringPiSetup();
 
-    SensorHandling sensors;
-
-    sensors.start_measuring(SensorHandling::sensorMeasurments);
+    auto result = std::async(std::launch::async, SensorHandling::measure, SensorHandling::sensorMeasurments);
 
     while(true)
     {

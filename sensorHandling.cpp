@@ -4,6 +4,7 @@
 #include <vector>
 #include <wiringPi.h>
 #include <math.h>
+#include <iostream>
 
 int SensorHandling::triggerDelay = 100;
 int SensorHandling::triggerPin = 1;
@@ -17,11 +18,10 @@ SensorHandling::SensorHandling()
         pinMode(firstEchoPin+i,INPUT);
     }
 
-
     digitalWrite(triggerPin, LOW);
 }
 
-void getSensorMeasurment(int sensorNumber, float *measurment)
+float get_sensor_measurment(int sensorNumber)
 {
     int firstEchoPin = 4;
     int sensorEchoPin = firstEchoPin + sensorNumber;
@@ -31,30 +31,26 @@ void getSensorMeasurment(int sensorNumber, float *measurment)
     float distance;
 
     while(digitalRead(sensorEchoPin)==LOW)
-        pulseStart = std::chrono::system_clock::now();
+       pulseStart = std::chrono::system_clock::now();
     while(digitalRead(sensorEchoPin)==HIGH)
-        pulseStart = std::chrono::system_clock::now();
+       pulseStart = std::chrono::system_clock::now();
     
     pulseDuration = pulseStart - pulseEnd;
     distance = roundf((17150 * pulseDuration.count()*100)/100);
-    *measurment = distance;
+    return distance;
 }
 
 void SensorHandling::trigger_sensor()
 {
     digitalWrite(triggerPin, HIGH);
-    delay(1);
+    delay(10);
     digitalWrite(triggerPin, LOW);
 }
 
 void SensorHandling::measure(float * measurment)
 {
-    std::vector<std::thread> sensorReading;
-
-    for(int sensorNumber = 0; sensorNumber < 2; ++sensorNumber)
-    {
-        sensorReading.push_back(std::thread(getSensorMeasurment, sensorNumber, measurment+sensorNumber ));
-    }
+    std::vector<std::future<float>> sensorReading;
+    float * originalMeasurmentPtr = measurment;
 
     while(true)
     {
@@ -62,14 +58,19 @@ void SensorHandling::measure(float * measurment)
 
         trigger_sensor();
 
-        for(auto& thread : sensorReading)
+        for(int sensorNumber = 0; sensorNumber < NUMBER_OF_SENSORS; sensorNumber++)
         {
-            thread.join();
+            sensorReading.push_back(std::async(std::launch::async, get_sensor_measurment, sensorNumber));
         }
-    }
-}
 
-void SensorHandling::start_measuring(float * measurment)
-{
-    std::async(&measure, measurment);
+        measurment = originalMeasurmentPtr;
+
+        for(auto& results : sensorReading)
+        {
+            measurment++;
+            *measurment = results.get();
+        }
+
+        sensorReading.clear();
+    }
 }

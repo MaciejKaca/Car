@@ -5,11 +5,11 @@ class SensorHandling
 {
     public:
         SensorHandling();
-        static float sensorMeasurments[NUMBER_OF_SENSORS];
-        static void measure(float * measurment);
-
+        static void start_measuring();
+        static int measurments[NUMBER_OF_SENSORS];
     private:
-        static int triggerDelay;
-        static int triggerPin;
-        static void trigger_sensor();
+        static const int cport_nr = 24; /* /dev/ttyUSB0 */
+        static const int bdrate = 9600;
+        static void read_measurments();
+        static void open_comport();
 }; 

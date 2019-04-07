@@ -5,63 +5,50 @@
 #include <wiringPi.h>
 #include <math.h>
 #include <iostream>
+#include "RS-232/rs232.h"
 
-int SensorHandling::triggerDelay = 500;
-int SensorHandling::triggerPin = 1;
+struct SensorData
+{
+    int sensorNumber :3,
+         measurment  :10;
+};
 
 SensorHandling::SensorHandling()
 {
-    const int firstEchoPin = 4;
-    pinMode(triggerPin, OUTPUT);
-    for(int i=firstEchoPin; i < NUMBER_OF_SENSORS; i++)
+}
+
+void SensorHandling::open_comport()
+{
+    const char mode[]={'8','N','1',0};
+
+    if(RS232_OpenComport(cport_nr, bdrate, mode))
     {
-        pinMode(firstEchoPin+i,INPUT);
+        printf("Can not open comport\n");
     }
-
-    digitalWrite(triggerPin, LOW);
 }
 
-float get_sensor_measurment(int sensorNumber)
+int SensorHandling::measurments[NUMBER_OF_SENSORS];
+
+void SensorHandling::read_measurments()
 {
-    int soundSpeed = 340;
-    int firstEchoPin = 4;
-    int sensorEchoPin = firstEchoPin + sensorNumber;
-    auto pulseStart = std::chrono::system_clock::now();
-    auto pulseEnd = std::chrono::system_clock::now();
-    std::chrono::duration<double> pulseDuration;
-
-    while(digitalRead(sensorEchoPin)==LOW)
-       pulseStart = std::chrono::high_resolution_clock::now();
-    while(digitalRead(sensorEchoPin)==HIGH)
-       pulseEnd = std::chrono::high_resolution_clock::now();
-
-    std::chrono::duration<float, std::micro> elapsedTime = pulseEnd - pulseStart;
-    float toSeconds = (elapsedTime.count()/2)/1000000;
-    float distance = soundSpeed * toSeconds;
-    float distaceToCm = distance * 100;
-    return distaceToCm;
-}
-
-void SensorHandling::trigger_sensor()
-{
-    digitalWrite(triggerPin, HIGH);
-    delay(1);
-    digitalWrite(triggerPin, LOW);
-}
-
-void SensorHandling::measure(float * measurment)
-{
-    float * originalMeasurmentPtr = measurment;
-
+    SensorData sensorData;
     while(true)
     {
-        delay(triggerDelay);
-        
-        measurment = originalMeasurmentPtr;
-        for(int sensorNumber = 0; sensorNumber < NUMBER_OF_SENSORS; sensorNumber++)
+        int n = RS232_PollComport(cport_nr, (unsigned char*)(&sensorData), sizeof(sensorData));
+        if(n > 0)
         {
-            trigger_sensor();
-            *(measurment  + sensorNumber) = get_sensor_measurment(sensorNumber);
+            //str_recv[n] = 0;   /* always put a "null" at the end of a string! */
+            std::cout << "Sensor: " << sensorData.sensorNumber << std::endl;
+            std::cout << "Measurment: " << sensorData.measurment << std::endl;
+            measurments[sensorData.sensorNumber] = sensorData.measurment;
         }
-    }
+        usleep(100);  /* sleep for 0.1 Second */
+    }   
+}
+
+void SensorHandling::start_measuring()
+{
+    open_comport();
+    usleep(2000000);
+    auto result = std::async(std::launch::async, read_measurments);
 }

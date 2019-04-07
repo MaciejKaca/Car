@@ -3,23 +3,23 @@
 #include "sensorHandling.h"
 #include <stdlib.h>
 #include <future>
-
-float SensorHandling::sensorMeasurments[NUMBER_OF_SENSORS];
+#include <unistd.h>
 
 int main(int argc, char *argv[])
 {
-    wiringPiSetup();
+	wiringPiSetup();
 
-    auto result = std::async(std::launch::async, SensorHandling::measure, SensorHandling::sensorMeasurments);
+	SensorHandling::start_measuring();
+	int(*measurment)[NUMBER_OF_SENSORS] = &SensorHandling::measurments;
 
-    while(true)
-    {
-        system("clear");
-        
-        std::cout << "Sensor 1: " << SensorHandling::sensorMeasurments[LEFT] << " cm" << std::endl;
-        std::cout << "Sensor 2: " << SensorHandling::sensorMeasurments[RIGHT] << " cm" << std::endl;
-        delay(10);
-    }
+	while (true)
+	{
+		system("clear");
 
-    return 0;
+		std::cout << "Sensor 1: " << measurment[LEFT] << " cm" << std::endl;
+		std::cout << "Sensor 2: " << measurment[RIGHT] << " cm" << std::endl;
+		usleep(100);
+	}
+
+	return 0;
 }
